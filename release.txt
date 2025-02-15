@@ -1,0 +1,7 @@
+build command
+GOOS=linux GOARCH=amd64 go build -0 bootstrap
+GOOS: Go Operating System
+GOARCH: Go Arch linux
+
+zip function.zip bootstrap: This command zips up the bootstrap built from last command as lambda function expects a zip function
+
