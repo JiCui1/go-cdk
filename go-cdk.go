@@ -4,6 +4,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	// "github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
   "github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
+  "github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -19,9 +20,23 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
+
+  // create table here
+  table := awsdynamodb.NewTable(stack, jsii.String("myUserTable"), &awsdynamodb.TableProps{
+    PartitionKey: &awsdynamodb.Attribute{
+      Name: jsii.String("username"),
+      Type: awsdynamodb.AttributeType_STRING,
+    },
+
+    // this table name maps to const in database.go const table name
+    TableName: jsii.String("userTable"),
+  })
+
+
+
 	// The code that defines your stack goes here
 
-  awslambda.NewFunction(stack, jsii.String("myLambdaFunction"), &awslambda.FunctionProps{
+  myFunction := awslambda.NewFunction(stack, jsii.String("myLambdaFunction"), &awslambda.FunctionProps{
     //go run time, meaning the lambda function can run in go, it serverless architure to run a specific language as you can't install language on a server
     //AL means amazon linux
     Runtime: awslambda.Runtime_PROVIDED_AL2023(),
@@ -29,6 +44,8 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
     Code: awslambda.AssetCode_FromAsset(jsii.String("lambda/function.zip"), nil),
     Handler: jsii.String("main"),
   })
+  
+  table.GrantReadWriteData(myFunction)
 
 	// example resource
 	// queue := awssqs.NewQueue(stack, jsii.String("GoCdkQueue"), &awssqs.QueueProps{
