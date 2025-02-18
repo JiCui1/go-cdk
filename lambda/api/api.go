@@ -2,11 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"lambda-func/database"
 	"lambda-func/types"
 	"net/http"
-
 	"github.com/aws/aws-lambda-go/events"
 )
 
@@ -73,6 +71,45 @@ func (api ApiHandler) RegisterUserHandler(request events.APIGatewayProxyRequest)
 
   return events.APIGatewayProxyResponse{
     Body: "Successfully Registered",
+    StatusCode: http.StatusOK,
+  }, nil
+}
+
+func (api ApiHandler) LoginUser(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+  type LoginRequest struct {
+    Username string
+    Password string
+  }
+
+  var loginRequest LoginRequest
+
+  err := json.Unmarshal([]byte(request.Body), &loginRequest)
+
+  if err != nil {
+    return events.APIGatewayProxyResponse{
+      Body: "Invalid Request",
+      StatusCode: http.StatusBadRequest,
+    }, err
+  }
+
+  user, err := api.dbStore.GetUser(loginRequest.Username)
+
+  if err != nil {
+    return events.APIGatewayProxyResponse{
+      Body: "Internal Server Error",
+      StatusCode: http.StatusInternalServerError,
+    }, err
+  }
+
+  if !types.ValidatePassword(user.PasswordHash, loginRequest.Password) {
+    return events.APIGatewayProxyResponse{
+      Body: "Invalid Credentials",
+      StatusCode: http.StatusBadRequest,
+    }, err
+  }
+
+  return events.APIGatewayProxyResponse{
+    Body: "Successfully Logged In",
     StatusCode: http.StatusOK,
   }, nil
 }
