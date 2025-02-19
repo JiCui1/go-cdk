@@ -102,7 +102,7 @@ func (u DynamoDBClient) GetUser(username string) (types.User, error) {
   }
 
   // map result to user struct
-  err = dynamodbattribute.UnmarshalMap(result.Item, user)
+  err = dynamodbattribute.UnmarshalMap(result.Item, &user)
   if err != nil {
     return user, err
   }

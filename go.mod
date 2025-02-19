@@ -17,6 +17,7 @@ require (
 	github.com/cdklabs/awscdk-asset-node-proxy-agent-go/nodeproxyagentv6/v2 v2.1.0 // indirect
 	github.com/cdklabs/cloud-assembly-schema-go/awscdkcloudassemblyschema/v39 v39.2.4 // indirect
 	github.com/fatih/color v1.18.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/yuin/goldmark v1.4.13 // indirect
