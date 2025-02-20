@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"lambda-func/app"
 	"net/http"
-
+	"lambda-func/middleware"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -21,6 +21,13 @@ func HandleRequest(event MyEvent) (string, error) {
   return fmt.Sprintf("succssfully called by - %s", event.Username), nil
 }
 
+func ProtectedHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+  return events.APIGatewayProxyResponse{
+    Body: "This is a protected path",
+    StatusCode: http.StatusOK,
+  }, nil
+}
+
 func main() {
   myApp := app.NewApp()
 
@@ -30,6 +37,10 @@ func main() {
         return myApp.ApiHandler.RegisterUserHandler(request)
       case "/login":
         return myApp.ApiHandler.LoginUser(request)
+      case "/protected":
+        // this syntax is chaining functions, this is how next function is called in the chain
+        return middleware.ValidateJWTMiddleware(ProtectedHandler)(request)
+
       default:
         return events.APIGatewayProxyResponse{
           Body: "Not Found",

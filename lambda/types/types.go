@@ -38,7 +38,7 @@ func ValidatePassword(hashedPassword, plainTextPassword string) bool {
 
 func CreateToken(user User) string {
   now := time.Now()
-  validUntil := now.Add(time.Hour *1).Unix
+  validUntil := now.Add(time.Hour * 1).Unix()
 
   claims := jwt.MapClaims{
     "user": user.Username,
