@@ -33,8 +33,8 @@ func main() {
 
   lambda.Start(func(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
     switch request.Path {
-      case "/register":
-        return myApp.ApiHandler.RegisterUserHandler(request)
+      // case "/register":
+      //   return myApp.ApiHandler.RegisterUserHandler(request)
       case "/login":
         return myApp.ApiHandler.LoginUser(request)
       case "/protected":
