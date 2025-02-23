@@ -4,6 +4,8 @@ import (
   "github.com/golang-jwt/jwt/v5"
   "golang.org/x/crypto/bcrypt"
   "time"
+  "strings"
+  "regexp"
 )
 
 type RegisterUser struct {
@@ -14,6 +16,32 @@ type RegisterUser struct {
 type User struct {
   Username string `json:"username"`
   PasswordHash string `json:"password"`
+}
+
+type Blog struct {
+  Slug string `json:"slug"`
+  Title string `json:"title"`
+  Description string `json:"description"`
+  Content string `json:"content"`
+  CreatedAt string  `json:"created_at"`
+}
+
+func Slugify(title string) string {
+	slug := strings.ToLower(title)
+
+	// Remove all non-alphanumeric characters except spaces
+	reg, _ := regexp.Compile(`[^a-z0-9\s]+`)
+	slug = reg.ReplaceAllString(slug, "")
+
+	// Replace multiple spaces with a single space
+	regSpace, _ := regexp.Compile(`\s+`)
+	slug = regSpace.ReplaceAllString(slug, " ")
+
+	// Trim spaces from the beginning and end, then replace spaces with hyphens
+	slug = strings.TrimSpace(slug)
+	slug = strings.ReplaceAll(slug, " ", "-")
+
+	return slug
 }
 
 func NewUser(registerUser RegisterUser) (User, error) {

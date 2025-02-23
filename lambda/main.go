@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"lambda-func/app"
 	"net/http"
 	"lambda-func/middleware"
@@ -9,17 +9,18 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-type MyEvent struct {
-  Username string `json:"username"`
-}
-
-func HandleRequest(event MyEvent) (string, error) {
-  if (event.Username == "") {
-    return "", fmt.Errorf("username cannot be empty")
-  }
-
-  return fmt.Sprintf("succssfully called by - %s", event.Username), nil
-}
+// not needed any more, below code was used to test routes
+// type MyEvent struct {
+//   Username string `json:"username"`
+// }
+//
+// func HandleRequest(event MyEvent) (string, error) {
+//   if (event.Username == "") {
+//     return "", fmt.Errorf("username cannot be empty")
+//   }
+//
+//   return fmt.Sprintf("succssfully called by - %s", event.Username), nil
+// }
 
 func ProtectedHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   return events.APIGatewayProxyResponse{
@@ -36,7 +37,11 @@ func main() {
       // case "/register":
       //   return myApp.ApiHandler.RegisterUserHandler(request)
       case "/login":
-        return myApp.ApiHandler.LoginUser(request)
+        return myApp.UserHandler.LoginUser(request)
+      case "/blog":
+        return myApp.BlogHandler.CreateBlogHandler(request)
+      // case "/blogs":
+      //   return myApp.userHandler.GetAllBLogs(request)
       case "/protected":
         // this syntax is chaining functions, this is how next function is called in the chain
         return middleware.ValidateJWTMiddleware(ProtectedHandler)(request)

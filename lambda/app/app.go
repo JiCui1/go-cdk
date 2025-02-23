@@ -6,14 +6,17 @@ import (
 )
 
 type App struct {
-  ApiHandler api.ApiHandler
+  UserHandler api.UserHandler
+  BlogHandler api.BlogHandler
 }
 
 func NewApp() App {
   db := database.NewDynamoDBClient()
-  apiHandler := api.NewApiHandler(db)
+  userHandler := api.NewUserHandler(db.UserStore())
+  blogHandler := api.NewBlogHandler(db.BlogStore())
 
   return App {
-    ApiHandler: apiHandler,
+    UserHandler: userHandler,
+    BlogHandler: blogHandler,
   }
 }

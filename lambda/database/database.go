@@ -10,7 +10,8 @@ import (
 )
 
 const (
-  TABLE_NAME="userTable"
+  USERS_TABLE="userTable"
+  BLOGS_TABLE="blogsTable"
 )
 
 type UserStore interface {
@@ -19,7 +20,30 @@ type UserStore interface {
   GetUser(username string) (types.User, error)
 }
 
+type BlogStore interface {
+  // GetBlog(BlogSlug string) (types.Blog, error)
+  InsertBlog(blog types.Blog)  error
+  // GetAllBlogs() ([]types.Blog, error)
+}
+
 type DynamoDBClient struct {
+  userStore UserStore
+  blogStore BlogStore
+}
+
+func (d *DynamoDBClient) UserStore() UserStore {
+    return d.userStore
+}
+
+func (d *DynamoDBClient) BlogStore() BlogStore {
+    return d.blogStore
+}
+
+type DynamoUserStore struct {
+  databaseStore *dynamodb.DynamoDB
+}
+
+type DynamoBlogStore struct {
   databaseStore *dynamodb.DynamoDB
 }
 
@@ -28,15 +52,47 @@ func NewDynamoDBClient() DynamoDBClient {
   db := dynamodb.New(dbSession)
 
   return DynamoDBClient{
-    databaseStore: db,
+    userStore: &DynamoUserStore{databaseStore: db},
+    blogStore: &DynamoBlogStore{databaseStore: db},
   }
 }
 
-func (u DynamoDBClient) DoesUserExist(username string) (bool, error) {
+func (u DynamoBlogStore) InsertBlog(blog types.Blog) error {
+
+  item := &dynamodb.PutItemInput{
+    TableName: aws.String(BLOGS_TABLE),
+    Item: map[string]*dynamodb.AttributeValue{
+      "slug": {
+        S: aws.String(blog.Slug),
+      },
+      "title": {
+        S: aws.String(blog.Title),
+      },
+      "description": {
+        S: aws.String(blog.Description),
+      },
+      "content": {
+        S: aws.String(blog.Content),
+      },
+      "created_at": {
+        S: aws.String(blog.CreatedAt),
+      },
+    },
+  }
+
+  _, err := u.databaseStore.PutItem(item)
+  if err != nil {
+    return err
+  }
+
+  return nil
+}
+
+func (u DynamoUserStore) DoesUserExist(username string) (bool, error) {
   // aws force to pass in reference here, also passing reference is faster than passing copy
   result, err := u.databaseStore.GetItem(&dynamodb.GetItemInput{
     // checking if there's a record in the dynamodb table where key is username and value is what we pass in
-    TableName: aws.String(TABLE_NAME),
+    TableName: aws.String(USERS_TABLE),
     Key: map[string]*dynamodb.AttributeValue{
       "username": {
         // S here means string for aws, similar things applied to boolean, int
@@ -59,10 +115,10 @@ func (u DynamoDBClient) DoesUserExist(username string) (bool, error) {
   return true, nil
 }
 
-func (u DynamoDBClient) InsertUser(user types.User) error {
+func (u DynamoUserStore) InsertUser(user types.User) error {
   // assemble the type that dynamodb understand first
   item := &dynamodb.PutItemInput{
-    TableName: aws.String(TABLE_NAME),
+    TableName: aws.String(USERS_TABLE),
     Item: map[string]*dynamodb.AttributeValue{
       "username": {
         S: aws.String(user.Username),
@@ -82,10 +138,10 @@ func (u DynamoDBClient) InsertUser(user types.User) error {
   return nil
 }
 
-func (u DynamoDBClient) GetUser(username string) (types.User, error) {
+func (u DynamoUserStore) GetUser(username string) (types.User, error) {
   var user types.User
   result, err := u.databaseStore.GetItem(&dynamodb.GetItemInput{
-    TableName: aws.String(TABLE_NAME),
+    TableName: aws.String(USERS_TABLE),
     Key: map[string]*dynamodb.AttributeValue {
       "username": {
         S: aws.String(username),

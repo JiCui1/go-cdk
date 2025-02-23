@@ -23,7 +23,7 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 
 
   // create table here
-  table := awsdynamodb.NewTable(stack, jsii.String("myUserTable"), &awsdynamodb.TableProps{
+  userTable := awsdynamodb.NewTable(stack, jsii.String("myUserTable"), &awsdynamodb.TableProps{
     PartitionKey: &awsdynamodb.Attribute{
       Name: jsii.String("username"),
       Type: awsdynamodb.AttributeType_STRING,
@@ -31,6 +31,16 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 
     // this table name maps to const in database.go const table name
     TableName: jsii.String("userTable"),
+  })
+
+  blogTable := awsdynamodb.NewTable(stack, jsii.String("myBlogTable"), &awsdynamodb.TableProps{
+    PartitionKey: &awsdynamodb.Attribute{
+      Name: jsii.String("slug"),
+      Type: awsdynamodb.AttributeType_STRING,
+    },
+
+    // this table name maps to const in database.go const table name
+    TableName: jsii.String("blogsTable"),
   })
 
 
@@ -46,7 +56,8 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
     Handler: jsii.String("main"),
   })
   
-  table.GrantReadWriteData(myFunction)
+  userTable.GrantReadWriteData(myFunction)
+  blogTable.GrantReadWriteData(myFunction)
 
   api := awsapigateway.NewRestApi(stack, jsii.String("myAPIGateway"), &awsapigateway.RestApiProps{
     DefaultCorsPreflightOptions: &awsapigateway.CorsOptions{
@@ -68,6 +79,17 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 
   loginResource := api.Root().AddResource(jsii.String("login"), nil)
   loginResource.AddMethod(jsii.String("POST"), integration, nil)
+
+  blogResource := api.Root().AddResource(jsii.String("blog"), nil)
+  blogResource.AddMethod(jsii.String("POST"), integration, nil)
+
+  blogWithSlugResource := blogResource.AddResource(jsii.String("{slug}"), nil)
+  blogWithSlugResource.AddMethod(jsii.String("GET"), integration, nil)
+  blogWithSlugResource.AddMethod(jsii.String("PUT"), integration, nil)
+  blogWithSlugResource.AddMethod(jsii.String("DELETE"), integration, nil)
+
+  blogsResource := api.Root().AddResource(jsii.String("blogs"), nil)
+  blogsResource.AddMethod(jsii.String("GET"), integration, nil)
 
   protectedResource := api.Root().AddResource(jsii.String("protected"), nil)
   protectedResource.AddMethod(jsii.String("GET"), integration, nil)

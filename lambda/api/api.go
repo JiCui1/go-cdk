@@ -7,19 +7,70 @@ import (
 	"net/http"
 	"github.com/aws/aws-lambda-go/events"
   "fmt"
+  "time"
 )
 
-type ApiHandler struct {
-  dbStore database.UserStore
+type UserHandler struct {
+  userStore database.UserStore
 }
 
-func NewApiHandler(dbStore database.UserStore) ApiHandler {
-  return ApiHandler {
-    dbStore:  dbStore,
+type BlogHandler struct {
+  blogStore database.BlogStore
+}
+
+func NewUserHandler(userStore database.UserStore) UserHandler {
+  return UserHandler {
+    userStore:  userStore,
   }
 }
 
-func (api ApiHandler) RegisterUserHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func NewBlogHandler(blogStore database.BlogStore) BlogHandler {
+  return BlogHandler {
+    blogStore:  blogStore,
+  }
+}
+
+func (api BlogHandler) CreateBlogHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+  var newBlog types.Blog
+
+  err := json.Unmarshal([]byte(request.Body), &newBlog)
+
+  if err != nil {
+    return events.APIGatewayProxyResponse{
+      Body: "Invalid Request",
+      StatusCode: http.StatusBadRequest,
+    }, err
+  }
+
+  if newBlog.Title == "" || newBlog.Description == "" || newBlog.Content == "" {
+    return events.APIGatewayProxyResponse{
+      Body: "Invalid Request - fields empty",
+      StatusCode: http.StatusBadRequest,
+    }, err
+  }
+
+  newBlog.Slug = types.Slugify(newBlog.Title)
+
+  date := time.Now()
+  newBlog.CreatedAt = date.Format("Jan 2, 2025")
+
+
+  err = api.blogStore.InsertBlog(newBlog)
+
+  if err != nil {
+    return events.APIGatewayProxyResponse{
+      Body: "Internal Server Error",
+      StatusCode: http.StatusInternalServerError,
+    }, err
+  }
+
+  return events.APIGatewayProxyResponse{
+    Body: "Successfully Created Blog",
+    StatusCode: http.StatusOK,
+  }, nil
+}
+
+func (api UserHandler) RegisterUserHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   var registerUser types.RegisterUser
 
   //map json to type
@@ -39,7 +90,7 @@ func (api ApiHandler) RegisterUserHandler(request events.APIGatewayProxyRequest)
     }, err
   }
 
-  userExists, err := api.dbStore.DoesUserExist(registerUser.Username) 
+  userExists, err := api.userStore.DoesUserExist(registerUser.Username) 
   if err != nil {
     return events.APIGatewayProxyResponse{
       Body: "Internal Server Error",
@@ -62,7 +113,7 @@ func (api ApiHandler) RegisterUserHandler(request events.APIGatewayProxyRequest)
     }, nil
   }
 
-  err = api.dbStore.InsertUser(user)
+  err = api.userStore.InsertUser(user)
   if err != nil {
     return events.APIGatewayProxyResponse{
       Body: "Internal Server Error",
@@ -76,7 +127,7 @@ func (api ApiHandler) RegisterUserHandler(request events.APIGatewayProxyRequest)
   }, nil
 }
 
-func (api ApiHandler) LoginUser(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (api UserHandler) LoginUser(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   type LoginRequest struct {
     Username string
     Password string
@@ -93,7 +144,7 @@ func (api ApiHandler) LoginUser(request events.APIGatewayProxyRequest) (events.A
     }, err
   }
 
-  user, err := api.dbStore.GetUser(loginRequest.Username)
+  user, err := api.userStore.GetUser(loginRequest.Username)
 
   if err != nil {
     return events.APIGatewayProxyResponse{
