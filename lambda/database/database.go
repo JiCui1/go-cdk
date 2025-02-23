@@ -21,7 +21,7 @@ type UserStore interface {
 }
 
 type BlogStore interface {
-  // GetBlog(BlogSlug string) (types.Blog, error)
+  GetBlog(BlogSlug string) (types.Blog, error)
   InsertBlog(blog types.Blog)  error
   GetAllBlogs() ([]types.Blog, error)
 }
@@ -55,6 +55,33 @@ func NewDynamoDBClient() DynamoDBClient {
     userStore: &DynamoUserStore{databaseStore: db},
     blogStore: &DynamoBlogStore{databaseStore: db},
   }
+}
+
+func (u DynamoBlogStore) GetBlog(slug string) (types.Blog, error) {
+  var blog types.Blog
+  result, err := u.databaseStore.GetItem(&dynamodb.GetItemInput{
+    TableName: aws.String(BLOGS_TABLE),
+    Key: map[string]*dynamodb.AttributeValue {
+      "slug": {
+        S: aws.String(slug),
+      },
+    },
+  })
+
+  if err != nil {
+    return blog, err
+  }
+
+  if result.Item == nil {
+    return blog, fmt.Errorf("no blog")
+  }
+
+  err = dynamodbattribute.UnmarshalMap(result.Item, &blog)
+  if err != nil {
+    return blog, err
+  }
+
+  return blog, nil
 }
 
 func (u DynamoBlogStore) GetAllBlogs() ([]types.Blog, error) {

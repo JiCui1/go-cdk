@@ -30,6 +30,35 @@ func NewBlogHandler(blogStore database.BlogStore) BlogHandler {
   }
 }
 
+func (api BlogHandler) GetBlogHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+  slug := request.PathParameters["slug"] 
+
+  if slug == "" {
+    return events.APIGatewayProxyResponse{
+      Body: "Invalid Request",
+      StatusCode: http.StatusBadRequest,
+    }, nil
+  }
+
+  blog, err := api.blogStore.GetBlog(slug)
+
+  if err != nil {
+    return events.APIGatewayProxyResponse{
+      Body: "Internal Server Error",
+      StatusCode: http.StatusInternalServerError,
+    }, err
+  }
+
+  // @TODO handle not found response
+
+  responseBody, err := json.Marshal(blog)
+
+  return events.APIGatewayProxyResponse{
+    StatusCode: http.StatusOK,
+    Body:       string(responseBody),
+  }, nil
+}
+
 func (api BlogHandler) GetAllBlogsHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   blogs, err := api.blogStore.GetAllBlogs()
 

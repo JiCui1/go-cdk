@@ -7,6 +7,7 @@ import (
 	"lambda-func/middleware"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+  "strings"
 )
 
 // not needed any more, below code was used to test routes
@@ -33,13 +34,22 @@ func main() {
   myApp := app.NewApp()
 
   lambda.Start(func(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
+    // Handle /blog/{slug}
+    if strings.HasPrefix(request.Path, "/blog/") && request.HTTPMethod == "GET" {
+        slug := request.PathParameters["slug"]
+        if slug != "" {
+          return myApp.BlogHandler.GetBlogHandler(request)
+        }
+    }
+
     switch request.Path {
       // case "/register":
       //   return myApp.ApiHandler.RegisterUserHandler(request)
       case "/login":
         return myApp.UserHandler.LoginUser(request)
       case "/blog":
-        return myApp.BlogHandler.CreateBlogHandler(request)
+          return myApp.BlogHandler.CreateBlogHandler(request)
       case "/blogs":
         return myApp.BlogHandler.GetAllBlogsHandler(request)
       case "/protected":
