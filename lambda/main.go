@@ -40,8 +40,8 @@ func main() {
         return myApp.UserHandler.LoginUser(request)
       case "/blog":
         return myApp.BlogHandler.CreateBlogHandler(request)
-      // case "/blogs":
-      //   return myApp.userHandler.GetAllBLogs(request)
+      case "/blogs":
+        return myApp.BlogHandler.GetAllBlogsHandler(request)
       case "/protected":
         // this syntax is chaining functions, this is how next function is called in the chain
         return middleware.ValidateJWTMiddleware(ProtectedHandler)(request)

@@ -30,6 +30,37 @@ func NewBlogHandler(blogStore database.BlogStore) BlogHandler {
   }
 }
 
+func (api BlogHandler) GetAllBlogsHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+  blogs, err := api.blogStore.GetAllBlogs()
+
+  if err != nil {
+    return events.APIGatewayProxyResponse{
+      Body: "Interal Server Error",
+      StatusCode: http.StatusInternalServerError,
+    }, err
+  }
+
+  if len(blogs) == 0 {
+    return events.APIGatewayProxyResponse{
+      StatusCode: http.StatusOK,
+      Body:       `[]`,
+    }, nil
+  }
+
+  responseBody, err := json.Marshal(blogs)
+  if err != nil {
+    return events.APIGatewayProxyResponse{
+      StatusCode: http.StatusInternalServerError,
+      Body:       "Failed to serialize response",
+    }, nil
+  }
+
+  return events.APIGatewayProxyResponse{
+    StatusCode: http.StatusOK,
+    Body:       string(responseBody),
+  }, nil
+}
+
 func (api BlogHandler) CreateBlogHandler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
   var newBlog types.Blog
 
@@ -52,7 +83,7 @@ func (api BlogHandler) CreateBlogHandler(request events.APIGatewayProxyRequest) 
   newBlog.Slug = types.Slugify(newBlog.Title)
 
   date := time.Now()
-  newBlog.CreatedAt = date.Format("Jan 2, 2025")
+  newBlog.CreatedAt = date.Format("Jan 2, 2009")
 
 
   err = api.blogStore.InsertBlog(newBlog)

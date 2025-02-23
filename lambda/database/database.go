@@ -23,7 +23,7 @@ type UserStore interface {
 type BlogStore interface {
   // GetBlog(BlogSlug string) (types.Blog, error)
   InsertBlog(blog types.Blog)  error
-  // GetAllBlogs() ([]types.Blog, error)
+  GetAllBlogs() ([]types.Blog, error)
 }
 
 type DynamoDBClient struct {
@@ -55,6 +55,25 @@ func NewDynamoDBClient() DynamoDBClient {
     userStore: &DynamoUserStore{databaseStore: db},
     blogStore: &DynamoBlogStore{databaseStore: db},
   }
+}
+
+func (u DynamoBlogStore) GetAllBlogs() ([]types.Blog, error) {
+  input := &dynamodb.ScanInput{
+    TableName: aws.String(BLOGS_TABLE),
+  }
+
+  result, err := u.databaseStore.Scan(input)
+  if err != nil {
+  return nil, fmt.Errorf("failed to scan blogs: %w", err)
+  }
+  
+  var blogs []types.Blog
+  err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &blogs)
+  if err != nil {
+      return nil, fmt.Errorf("failed to unmarshal blogs: %w", err)
+  }
+
+  return blogs, nil
 }
 
 func (u DynamoBlogStore) InsertBlog(blog types.Blog) error {
