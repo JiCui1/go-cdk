@@ -48,8 +48,8 @@ func main() {
       //   return myApp.ApiHandler.RegisterUserHandler(request)
       case "/login":
         return myApp.UserHandler.LoginUser(request)
-      case "/blog":
-          return myApp.BlogHandler.CreateBlogHandler(request)
+      // case "/blog":
+      //     return myApp.BlogHandler.CreateBlogHandler(request)
       case "/blogs":
         return myApp.BlogHandler.GetAllBlogsHandler(request)
       case "/protected":
